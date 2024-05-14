@@ -1,0 +1,10 @@
+numpy
+pandas
+matplotlib
+seaborn
+
+lxml
+BeautifulSoup4
+html5lib
+
+geopy
