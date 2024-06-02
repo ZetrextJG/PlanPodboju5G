@@ -23,6 +23,9 @@ class MarkovChain(ABC):
         assert self.n_cities > 0
         self.rng  = np.random.default_rng()
 
+    def validate_state(self, state: np.ndarray) -> bool:
+        return state.sum() > 0
+
     @abstractmethod
     def next_state(self, state: np.ndarray) -> np.ndarray:
         ...
@@ -40,7 +43,9 @@ class RandomWalk(MarkovChain):
         idx = self.rng.integers(0, self.n_cities, endpoint=False)
         new_state = state.copy()
         new_state[idx] = ~new_state[idx]
-        return new_state
+        if self.validate_state(new_state):
+            return new_state
+        return state
 
 
 class WeightedRandomJumps(MarkovChain):
@@ -55,16 +60,43 @@ class WeightedRandomJumps(MarkovChain):
         
         new_state = state.copy()
         new_state[idxs] = ~new_state[idxs]
-        return new_state
+        if self.validate_state(new_state):
+            return new_state
+        return state
+        
+
+#######################
+# Starting states
+#######################
+
+
+def bit_random_state(n_chains:int, n_cities: int) -> list[np.ndarray]:
+    chains = []
+    for _ in range(n_chains):
+        chains.append(np.random.random(n_cities) < 0.5)
+    return chains
+
+
+def uniform_random_states(n_chains:int, n_cities: int) -> list[np.ndarray]:
+    chains = []
+    for _ in range(n_chains):
+        m = np.random.binomial(n=n_cities, p = 0.5)
+        idxs = np.random.choice(n_cities, m, replace=False)
+        mask = np.zeros(n_cities, dtype=bool)
+        mask[idxs] = True
+        chains.append(mask)
+    return chains
+
+
+def heuristic_states(n_chains:int, n_cities: int) -> list[np.ndarray]:
+    """This returns exaclty n_chains states, each one with a different city selected."""
+    assert n_chains == n_cities
+    return [*np.eye(n_cities).astype(bool)]
 
 
 #######################
 # Metropolis-Hastings
 #######################
-
-
-def initalize_random_state(n) :
-    return np.random.random(n) < 0.5
 
 
 class MetropolisHastings:
@@ -81,10 +113,7 @@ class MetropolisHastings:
         if states is not None:
             self.states = states
         else:
-            self.states = [
-                initalize_random_state(n_cities)
-                for _ in range(n_chains)
-            ]
+            self.states = bit_random_state(n_chains, n_cities)
 
         self.states = np.array(self.states, dtype=np.bool_)
 
@@ -135,13 +164,14 @@ class Solver:
 
         return objective_function
 
-    def simulate_chains(self, lambda_: float = 0.1, n_chains: int = 10, steps: int = 1000):
+    def simulate_chains(self, lambda_: float = 0.1, n_chains: int = 10, steps: int = 1000, states: Optional[list[np.ndarray]] = None):
 
         mh = MetropolisHastings(
             n_cities=self.n_cities,
             n_chains=n_chains,
             exploring_chain=self.exploring_chain,
-            objective_function=self.get_objective_funtion(lambda_)
+            objective_function=self.get_objective_funtion(lambda_),
+            states=states
         )
 
         best_state = None
@@ -165,3 +195,4 @@ class Solver:
             "step_best_scores": step_best_scores,
             "step_best_state_size": step_best_state_size
         }
+
