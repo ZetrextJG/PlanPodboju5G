@@ -1,14 +1,17 @@
-numba
-numpy
-pandas
-matplotlib
+numba~=0.59.1
+numpy~=1.26.1
+pandas~=1.5.3
+matplotlib~=3.7.1
 seaborn
 
 lxml
-BeautifulSoup4
+BeautifulSoup4~=4.12.2
 html5lib
 
 pytz
 six
 
-geopy
+geopy~=2.4.1
+
+tqdm~=4.65.0
+requests~=2.30.0

@@ -5,6 +5,9 @@ from geopy.distance import geodesic
 from itertools import combinations
 
 df = pd.read_csv("cities.csv")
+#100 largest cities
+df = df.sort_values("population", ascending=False).head(100)
+
 df = df[["latitude", "longitude"]]
 data = df.values
 num_rows = len(data)
