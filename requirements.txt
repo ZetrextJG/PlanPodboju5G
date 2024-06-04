@@ -8,4 +8,7 @@ lxml
 BeautifulSoup4
 html5lib
 
+pytz
+six
+
 geopy
